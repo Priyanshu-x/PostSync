@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import os
@@ -11,41 +12,74 @@ load_dotenv()
 
 app = FastAPI(title="PostSync API", description="Automated social media posting with AI")
 
+# Configure CORS
+origins = [
+    "http://localhost:5173", # Vite dev server
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 class PostRequest(BaseModel):
     base_text: str
     image_url: Optional[str] = None
     platforms: List[str] = ["facebook", "instagram", "twitter", "linkedin"]
 
-class PostResponse(BaseModel):
+class PublishRequest(BaseModel):
+    captions: dict # map of platform -> tailored string
+    image_url: Optional[str] = None
+    platforms: List[str]
+
+class PublishResponse(BaseModel):
     status: str
     platforms: List[str]
-    ayrshare_response: dict
+    ayrshare_responses: dict
 
 @app.get("/")
 def read_root():
     return {"message": "Welcome to PostSync API. Setup your agency workflows!"}
 
-@app.post("/auto-post", response_model=PostResponse)
-async def create_auto_post(request: PostRequest):
+@app.post("/generate-preview")
+async def generate_preview(request: PostRequest):
     """
-    Takes a base thought, uses AI to adapt it to each platform, 
-    and posts them via Ayrshare.
+    Takes a base thought and generates AI tailored text for each platform.
+    Returns the previews WITHOUT publishing.
     """
     try:
-        # Step 1: Generate tailored text for different platforms using AI
-        # If no platforms are specified, just return
         if not request.platforms:
             raise HTTPException(status_code=400, detail="No platforms specified")
 
-        # Let the AI format the caption based on the base_text
         captions = await generate_platform_captions(request.base_text, request.platforms)
+        
+        return {
+            "status": "success",
+            "platforms": request.platforms,
+            "captions": captions
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-        # Step 2: Post to Ayrshare
+@app.post("/publish", response_model=PublishResponse)
+async def publish_posts(request: PublishRequest):
+    """
+    Takes the approved/edited captions and publishes them via Ayrshare.
+    """
+    try:
+        if not request.platforms:
+            raise HTTPException(status_code=400, detail="No platforms specified")
+
         posting_responses = {}
         for platform in request.platforms:
-            platform_text = captions.get(platform, request.base_text)
+            platform_text = request.captions.get(platform)
+            if not platform_text:
+                continue
             
-            # Post to individual platforms via Ayrshare
             result = post_to_platforms(
                 post_text=platform_text, 
                 platforms=[platform], 
@@ -53,11 +87,10 @@ async def create_auto_post(request: PostRequest):
             )
             posting_responses[platform] = result
 
-        return PostResponse(
+        return PublishResponse(
             status="success",
             platforms=request.platforms,
-            ayrshare_response=posting_responses
+            ayrshare_responses=posting_responses
         )
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
