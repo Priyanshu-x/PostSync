@@ -33,7 +33,7 @@ class PostRequest(BaseModel):
 
 class PublishRequest(BaseModel):
     captions: dict # map of platform -> tailored string
-    image_url: Optional[str] = None
+    image_base64: Optional[str] = None
     platforms: List[str]
 
 class PublishResponse(BaseModel):
@@ -46,7 +46,7 @@ def read_root():
     return {"message": "Welcome to PostSync API. Setup your agency workflows!"}
 
 @app.post("/generate-preview")
-async def generate_preview(request: PostRequest):
+def generate_preview(request: PostRequest):
     """
     Takes a base thought and generates AI tailored text for each platform.
     Returns the previews WITHOUT publishing.
@@ -55,7 +55,7 @@ async def generate_preview(request: PostRequest):
         if not request.platforms:
             raise HTTPException(status_code=400, detail="No platforms specified")
 
-        captions = await generate_platform_captions(request.base_text, request.platforms)
+        captions = generate_platform_captions(request.base_text, request.platforms)
         
         return {
             "status": "success",
@@ -66,7 +66,7 @@ async def generate_preview(request: PostRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/publish", response_model=PublishResponse)
-async def publish_posts(request: PublishRequest):
+def publish_posts(request: PublishRequest):
     """
     Takes the approved/edited captions and publishes them via Ayrshare.
     """
@@ -83,7 +83,7 @@ async def publish_posts(request: PublishRequest):
             result = post_to_platforms(
                 post_text=platform_text, 
                 platforms=[platform], 
-                image_url=request.image_url
+                image_base64=request.image_base64
             )
             posting_responses[platform] = result
 

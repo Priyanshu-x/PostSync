@@ -8,7 +8,17 @@ const platformsList = [
   { id: 'facebook', name: 'Facebook', color: 'hsl(214, 89%, 52%)' }
 ];
 
-export default function PostEditor({ baseText, setBaseText, platforms, setPlatforms, onGenerate, isLoading }) {
+export default function PostEditor({ baseText, setBaseText, imageBase64, setImageBase64, platforms, setPlatforms, onGenerate, isLoading }) {
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImageBase64(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+  
   const togglePlatform = (id) => {
     if (platforms.includes(id)) {
         setPlatforms(platforms.filter(p => p !== id));
@@ -33,7 +43,25 @@ export default function PostEditor({ baseText, setBaseText, platforms, setPlatfo
           value={baseText}
           onChange={(e) => setBaseText(e.target.value)}
           disabled={isLoading}
+          disabled={isLoading}
         ></textarea>
+      </div>
+
+      <div className="input-group">
+        <label className="input-label" style={{ marginBottom: '0.5rem' }}>Image Upload (Required for Instagram)</label>
+        <input
+          type="file"
+          accept="image/jpeg, image/png, image/webp"
+          className="textarea-primary"
+          style={{ minHeight: '40px', padding: '0.75rem', cursor: 'pointer' }}
+          onChange={handleImageUpload}
+          disabled={isLoading}
+        />
+        {imageBase64 && (
+          <div style={{ marginTop: '1rem' }}>
+             <img src={imageBase64} alt="Preview" style={{ maxHeight: '150px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}/>
+          </div>
+        )}
       </div>
 
       <div className="input-group">

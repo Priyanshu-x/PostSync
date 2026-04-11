@@ -7,6 +7,7 @@ const API_BASE_URL = 'http://127.0.0.1:8000';
 
 function App() {
   const [baseText, setBaseText] = useState('');
+  const [imageBase64, setImageBase64] = useState('');
   const [platforms, setPlatforms] = useState(['twitter', 'linkedin']);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -49,11 +50,19 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           captions: previews,
-          platforms: platforms
+          platforms: platforms,
+          image_base64: imageBase64 || undefined
         })
       });
       
       if (!res.ok) throw new Error('API Error');
+      const data = await res.json();
+      
+      const hasErrors = Object.values(data.ayrshare_responses).some(response => response.error);
+      if (hasErrors) {
+        throw new Error('Some platforms failed to publish.');
+      }
+      
       setPublishStatus('success');
     } catch (e) {
       console.error(e);
@@ -76,6 +85,8 @@ function App() {
         <PostEditor 
           baseText={baseText}
           setBaseText={setBaseText}
+          imageBase64={imageBase64}
+          setImageBase64={setImageBase64}
           platforms={platforms}
           setPlatforms={setPlatforms}
           onGenerate={handleGeneratePreviews}

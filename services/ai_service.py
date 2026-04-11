@@ -1,19 +1,18 @@
 import os
-import openai
 from typing import List
 
-async def generate_platform_captions(base_text: str, platforms: List[str]) -> dict:
+def generate_platform_captions(base_text: str, platforms: List[str]) -> dict:
     """
     Uses OpenAI to format the base_text appropriately for each social media platform.
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY is not set in the environment variables.")
+    from google import genai
+    import os
     
-    # We use the legacy OpenAI client format or new one depending on the module version, 
-    # Here using the newer OpenAI 1.x pattern via an instantiated client.
-    from openai import AsyncOpenAI
-    client = AsyncOpenAI(api_key=api_key)
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY is not set in the environment variables.")
+        
+    client = genai.Client(api_key=api_key)
 
     platform_captions = {}
 
@@ -35,17 +34,17 @@ async def generate_platform_captions(base_text: str, platforms: List[str]) -> di
         """
 
         try:
-            response = await client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": "You are a professional social media manager."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=600,
-                temperature=0.7
+            prompt_instruction = f"SYSTEM: You are a professional social media manager. IMPORTANT: Never use more than 4 hashtags in any post.\nUSER: {prompt}"
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt_instruction,
+                config=genai.types.GenerateContentConfig(
+                    max_output_tokens=600,
+                    temperature=0.7,
+                )
             )
             
-            generated_text = response.choices[0].message.content.strip()
+            generated_text = response.text.strip()
             platform_captions[platform] = generated_text
 
         except Exception as e:
