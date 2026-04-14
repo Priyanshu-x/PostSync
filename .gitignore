@@ -20,3 +20,6 @@ __pycache__/
 
 # MacOS
 .DS_Store
+
+# local Files
+local.readme.md

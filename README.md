@@ -22,7 +22,7 @@ It uses OpenAI (GPT-4o) to intelligently rewrite single content pieces into plat
 ### 2. Installation
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/Priyanshu-x/PostSync
 cd PostSync
 
 # Set up the virtual environment

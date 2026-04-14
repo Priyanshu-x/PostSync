@@ -17,6 +17,14 @@ def post_to_platforms(post_text: str, platforms: List[str], image_base64: Option
         "Content-Type": "application/json"
     }
 
+    # Twitter BYO Credentials requirement (Ayrshare Error 419)
+    if "twitter" in platforms:
+        t_key = os.getenv("TWITTER_API_KEY")
+        t_secret = os.getenv("TWITTER_API_SECRET")
+        if t_key and t_secret:
+            headers["X-Twitter-OAuth1-Api-Key"] = t_key
+            headers["X-Twitter-OAuth1-Api-Secret"] = t_secret
+
     payload = {
         "post": post_text,
         "platforms": platforms,

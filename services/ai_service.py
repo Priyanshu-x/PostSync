@@ -22,7 +22,7 @@ def generate_platform_captions(base_text: str, platforms: List[str]) -> dict:
         Convert the following base text into an engaging, optimized post specifically for {platform}.
         
         Guidelines for {platform}:
-        - If Twitter/X: keep it under 280 characters, use a hook, maybe a thread style but summarized. Max 2 hashtags.
+        - If Twitter/X: keep it under 240 characters TOTAL, use a hook, maybe a thread style but highly summarized. Max 2 hashtags.
         - If Instagram: use an engaging hook, emojis, spacing, and 5-10 relevant hashtags at the bottom.
         - If LinkedIn: make it professional, insightful, use line breaks, and 3-5 professional hashtags.
         - If Facebook: keep it conversational, engage the community, ask a question at the end.
